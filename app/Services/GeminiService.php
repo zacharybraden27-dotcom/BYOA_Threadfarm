@@ -44,10 +44,10 @@ class GeminiService
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature' => 0.7,
-                    'topK' => 40,
-                    'topP' => 0.95,
-                    'maxOutputTokens' => 2048,
+                    'temperature' => config('threadfarm.gemini.temperature', 0.7),
+                    'topK' => config('threadfarm.gemini.top_k', 40),
+                    'topP' => config('threadfarm.gemini.top_p', 0.95),
+                    'maxOutputTokens' => config('threadfarm.gemini.max_output_tokens', 2048),
                 ]
             ]);
 
@@ -87,14 +87,16 @@ class GeminiService
     private function buildPrompt(string $blogPostContent, string $blogPostTitle): string
     {
         $titlePart = $blogPostTitle ? "Title: {$blogPostTitle}\n\n" : '';
+        $tweetCount = config('threadfarm.tweet.count', 10);
+        $maxChars = config('threadfarm.tweet.max_character_count', 280);
         
-        return "You are a social media content creator. Based on the following blog post, generate exactly 10 tweets that summarize key points, insights, or quotes from the content.
+        return "You are a social media content creator. Based on the following blog post, generate exactly {$tweetCount} tweets that summarize key points, insights, or quotes from the content.
 
 IMPORTANT REQUIREMENTS:
-- Each tweet must be 280 characters or less
+- Each tweet must be {$maxChars} characters or less
 - Do NOT include any hashtags (#)
 - Do NOT include any mentions (@)
-- Each tweet should be on its own line, numbered 1-10
+- Each tweet should be on its own line, numbered 1-{$tweetCount}
 - Make the tweets engaging and shareable
 - Focus on different aspects of the blog post for variety
 - Write in a conversational, engaging tone
@@ -102,13 +104,15 @@ IMPORTANT REQUIREMENTS:
 {$titlePart}Blog Post Content:
 {$blogPostContent}
 
-Generate 10 tweets, one per line, numbered 1-10:";
+Generate {$tweetCount} tweets, one per line, numbered 1-{$tweetCount}:";
     }
 
     private function parseTweets(string $text): array
     {
         $lines = explode("\n", $text);
         $tweets = [];
+        $tweetCount = config('threadfarm.tweet.count', 10);
+        $maxChars = config('threadfarm.tweet.max_character_count', 280);
 
         foreach ($lines as $line) {
             $line = trim($line);
@@ -126,18 +130,18 @@ Generate 10 tweets, one per line, numbered 1-10:";
             $line = preg_replace('/@\w+/', '', $line);
             $line = trim($line);
 
-            if (!empty($line) && mb_strlen($line) <= 280) {
+            if (!empty($line) && mb_strlen($line) <= $maxChars) {
                 $tweets[] = $line;
             }
         }
 
-        // Ensure we have exactly 10 tweets
-        if (count($tweets) > 10) {
-            $tweets = array_slice($tweets, 0, 10);
+        // Ensure we have exactly the configured number of tweets
+        if (count($tweets) > $tweetCount) {
+            $tweets = array_slice($tweets, 0, $tweetCount);
         }
 
-        // If we have fewer than 10, pad with empty strings or repeat logic
-        while (count($tweets) < 10) {
+        // If we have fewer than the configured count, pad with empty strings or repeat logic
+        while (count($tweets) < $tweetCount) {
             $tweets[] = '';
         }
 

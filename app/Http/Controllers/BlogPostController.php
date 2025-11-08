@@ -22,9 +22,10 @@ class BlogPostController extends Controller
             });
         }
 
-        $posts = $query->withCount(['tweets as unused_tweets_count' => function ($query) {
-            $query->where('status', 'draft');
-        }])->latest()->paginate(12);
+        $draftStatus = config('threadfarm.tweet.statuses', ['draft', 'posted', 'discarded'])[0];
+        $posts = $query->withCount(['tweets as unused_tweets_count' => function ($query) use ($draftStatus) {
+            $query->where('status', $draftStatus);
+        }])->latest()->paginate(config('threadfarm.pagination.posts_per_page', 12));
 
         return view('posts.index', compact('posts'));
     }
@@ -57,11 +58,13 @@ class BlogPostController extends Controller
         }
 
         $post->load('tweets');
-        $draftTweets = $post->tweets()->where('status', 'draft')->get();
-        $postedTweets = $post->tweets()->where('status', 'posted')->get();
-        $discardedTweets = $post->tweets()->where('status', 'discarded')->get();
+        $statuses = config('threadfarm.tweet.statuses', ['draft', 'posted', 'discarded']);
+        $draftTweets = $post->tweets()->where('status', $statuses[0])->get();
+        $postedTweets = $post->tweets()->where('status', $statuses[1])->get();
+        $discardedTweets = $post->tweets()->where('status', $statuses[2])->get();
+        $maxCharacterCount = config('threadfarm.tweet.max_character_count', 280);
 
-        return view('posts.show', compact('post', 'draftTweets', 'postedTweets', 'discardedTweets'));
+        return view('posts.show', compact('post', 'draftTweets', 'postedTweets', 'discardedTweets', 'maxCharacterCount'));
     }
 
     public function edit(BlogPost $post)
@@ -129,9 +132,10 @@ class BlogPostController extends Controller
             });
         }
 
-        $posts = $query->withCount(['tweets as unused_tweets_count' => function ($query) {
-            $query->where('status', 'draft');
-        }])->latest('archived_at')->paginate(12);
+        $draftStatus = config('threadfarm.tweet.statuses', ['draft', 'posted', 'discarded'])[0];
+        $posts = $query->withCount(['tweets as unused_tweets_count' => function ($query) use ($draftStatus) {
+            $query->where('status', $draftStatus);
+        }])->latest('archived_at')->paginate(config('threadfarm.pagination.posts_per_page', 12));
 
         return view('posts.archived', compact('posts'));
     }
@@ -157,14 +161,16 @@ class BlogPostController extends Controller
             $tweets = $geminiService->generateTweets($post->content, $post->title);
 
             // Delete existing draft tweets
-            $post->tweets()->where('status', 'draft')->delete();
+            $statuses = config('threadfarm.tweet.statuses', ['draft', 'posted', 'discarded']);
+            $draftStatus = $statuses[0];
+            $post->tweets()->where('status', $draftStatus)->delete();
 
             // Create new tweets
             foreach ($tweets as $tweetContent) {
                 if (!empty(trim($tweetContent))) {
                     $post->tweets()->create([
                         'content' => $tweetContent,
-                        'status' => 'draft',
+                        'status' => $draftStatus,
                     ]);
                 }
             }

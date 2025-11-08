@@ -15,8 +15,9 @@ class TweetController extends Controller
             abort(403);
         }
 
+        $maxChars = config('threadfarm.tweet.max_character_count', 280);
         $request->validate([
-            'content' => 'required|string|max:280',
+            'content' => ['required', 'string', 'max:' . $maxChars],
         ]);
 
         $tweet->update([
@@ -33,8 +34,9 @@ class TweetController extends Controller
             abort(403);
         }
 
+        $statuses = config('threadfarm.tweet.statuses', ['draft', 'posted', 'discarded']);
         $tweet->update([
-            'status' => 'posted',
+            'status' => $statuses[1], // 'posted'
             'posted_at' => now(),
         ]);
 
@@ -48,8 +50,9 @@ class TweetController extends Controller
             abort(403);
         }
 
+        $statuses = config('threadfarm.tweet.statuses', ['draft', 'posted', 'discarded']);
         $tweet->update([
-            'status' => 'discarded',
+            'status' => $statuses[2], // 'discarded'
         ]);
 
         return back()->with('success', 'Tweet discarded!');
@@ -62,8 +65,9 @@ class TweetController extends Controller
             abort(403);
         }
 
+        $statuses = config('threadfarm.tweet.statuses', ['draft', 'posted', 'discarded']);
         $tweet->update([
-            'status' => 'draft',
+            'status' => $statuses[0], // 'draft'
             'posted_at' => null,
         ]);
 

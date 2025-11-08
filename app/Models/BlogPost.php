@@ -31,6 +31,7 @@ class BlogPost extends Model
 
     public function getUnusedTweetsCountAttribute(): int
     {
-        return $this->tweets()->where('status', 'draft')->count();
+        $statuses = config('threadfarm.tweet.statuses', ['draft', 'posted', 'discarded']);
+        return $this->tweets()->where('status', $statuses[0])->count();
     }
 }
