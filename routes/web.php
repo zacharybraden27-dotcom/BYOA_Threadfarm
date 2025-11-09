@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::get('/', function () {
-    return redirect()->route('posts.index');
-});
+    return view('welcome');
+})->name('welcome');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
