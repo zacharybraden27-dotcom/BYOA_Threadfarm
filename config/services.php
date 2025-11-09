@@ -39,4 +39,15 @@ return [
         'api_key' => env('GEMINI_API_KEY'),
     ],
 
+    'stripe' => [
+        'model' => env('STRIPE_MODEL', \App\Models\User::class),
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook' => [
+            'secret' => env('STRIPE_WEBHOOK_SECRET'),
+            'tolerance' => env('STRIPE_WEBHOOK_TOLERANCE', 300),
+        ],
+        'price_id' => env('STRIPE_PRICE_ID'),
+    ],
+
 ];

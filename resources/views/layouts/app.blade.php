@@ -21,6 +21,11 @@
                 </div>
                 <div class="flex items-center space-x-4">
                     @auth
+                        @if(Auth::user()->subscribed('default') || Auth::user()->onTrial('default'))
+                            <a href="{{ route('posts.index') }}" class="text-gray-400 hover:text-white transition-colors font-medium">Dashboard</a>
+                        @else
+                            <a href="{{ route('subscription.index') }}" class="text-gray-400 hover:text-white transition-colors font-medium">Subscribe</a>
+                        @endif
                         <span class="text-gray-300 font-medium">{{ Auth::user()->name }}</span>
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf

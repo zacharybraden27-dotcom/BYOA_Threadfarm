@@ -23,6 +23,13 @@ class LoginController extends Controller
 
         if (Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
             $request->session()->regenerate();
+            $user = Auth::user();
+            
+            // Redirect to subscription page if user is not subscribed and not on trial
+            if (!$user->subscribed('default') && !$user->onTrial('default')) {
+                return redirect()->intended('/subscribe');
+            }
+            
             return redirect()->intended('/posts');
         }
 

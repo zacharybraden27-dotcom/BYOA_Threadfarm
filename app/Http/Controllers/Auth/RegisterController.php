@@ -32,6 +32,6 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
-        return redirect('/posts');
+        return redirect('/subscribe');
     }
 }
